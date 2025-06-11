@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Maze Reward Game</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #d6c7a1;
+    }
+
+    canvas {
+      display: block;
+      margin: auto;
+
+      border: 1px solid #ddd;
+      padding: 20px;
+      border-radius: 5px;
+      background-color: #a9b4cc;
+      box-shadow: 0 0 10px #a9b4cc;
+
+    }
+
+    #popup {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.85);
+      padding: 20px 40px;
+      border: 2px solid gold;
+      color: white;
+      font-size: 1.5em;
+      display: none;
+      z-index: 10;
+    }
+
+    .game-container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .btn {
+      background: #333;
+      color: white;
+      border: 1px solid #888;
+      font-size: 18px;
+      padding: 10px;
+      border-radius: 5px;
+      min-width: 60px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Maze Reward Collector</h1>
+  <p>Use arrow keys or touch buttons to move. Total Rewards: <span id="score">0</span></p>
+  <div class="game-container">
+    <canvas id="gameCanvas" width="640" height="640"></canvas>
+    <div class="controls">
+      <button class="btn" id="btn-up">⬆️</button>
+      <button class="btn" id="btn-left">⬅️</button>
+      <button class="btn" id="btn-right">➡️</button>
+      <button class="btn" id="btn-down">⬇️</button>
+    </div>
+  </div>
+  <div id="popup"></div>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const scoreDisplay = document.getElementById("score");
+    const popup = document.getElementById("popup");
+
+    const tileSize = 32;
+    const rows = 20;
+    const cols = 20;
+
+    const maze = Array.from({length: rows}, () => Array(cols).fill(1));
+
+    const player = {
+      x: 1,
+      y: 1,
+      color: "lime",
+    };
+
+    const goal = {
+      x: cols - 2,
+      y: rows - 2,
+      color: "red",
+    };
+
+    let rewards = [];
+    let score = 0;
+    let gameCompleted = false;
+
+    function generateMaze() {
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          maze[y][x] = 1;
+        }
+      }
+
+      function dfs(x, y) {
+        const dirs = [
+          [0, -1], [1, 0], [0, 1], [-1, 0]
+        ].sort(() => Math.random() - 0.5);
+
+        for (const [dx, dy] of dirs) {
+          const nx = x + dx * 2;
+          const ny = y + dy * 2;
+
+          if (nx > 0 && nx < cols && ny > 0 && ny < rows && maze[ny][nx] === 1) {
+            maze[ny][nx] = 0;
+            maze[y + dy][x + dx] = 0;
+            dfs(nx, ny);
+          }
+        }
+      }
+
+      maze[player.y][player.x] = 0;
+      dfs(player.x, player.y);
+      maze[goal.y][goal.x] = 0;
+    }
+
+    function placeRewards(count) {
+      rewards = [];
+      let placed = 0;
+      while (placed < count) {
+        const rx = Math.floor(Math.random() * cols);
+        const ry = Math.floor(Math.random() * rows);
+        if (maze[ry][rx] === 0 && !(rx === player.x && ry === player.y) && !(rx === goal.x && ry === goal.y)) {
+          rewards.push({x: rx, y: ry});
+          placed++;
+        }
+      }
+    }
+
+    function drawMaze() {
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          ctx.fillStyle = maze[y][x] === 1 ? "#444" : "#000";
+          ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+        }
+      }
+    }
+
+    function drawPlayer() {
+      ctx.fillStyle = player.color;
+      ctx.fillRect(player.x * tileSize + 4, player.y * tileSize + 4, tileSize - 8, tileSize - 8);
+    }
+
+    function drawGoal() {
+      ctx.fillStyle = goal.color;
+      ctx.beginPath();
+      ctx.arc(goal.x * tileSize + tileSize / 2, goal.y * tileSize + tileSize / 2, 10, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+
+    function drawRewards() {
+      ctx.fillStyle = "gold";
+      for (const r of rewards) {
+        ctx.beginPath();
+        ctx.arc(r.x * tileSize + tileSize / 2, r.y * tileSize + tileSize / 2, 6, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+    }
+
+    function collectReward() {
+      for (let i = 0; i < rewards.length; i++) {
+        if (rewards[i].x === player.x && rewards[i].y === player.y) {
+          rewards.splice(i, 1);
+          score++;
+          scoreDisplay.textContent = score;
+          break;
+        }
+      }
+    }
+
+    function checkGoalReached() {
+      if (player.x === goal.x && player.y === goal.y && !gameCompleted) {
+        gameCompleted = true;
+        popup.textContent = `🎉 Congratulations! You reached the goal with ${score} rewards.`;
+        popup.style.display = "block";
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawMaze();
+      drawRewards();
+      drawGoal();
+      drawPlayer();
+    }
+
+    function movePlayer(dx, dy) {
+      const newX = player.x + dx;
+      const newY = player.y + dy;
+      if (maze[newY] && maze[newY][newX] === 0) {
+        player.x = newX;
+        player.y = newY;
+        collectReward();
+        draw();
+        checkGoalReached();
+      }
+    }
+
+    document.getElementById("btn-up").addEventListener("touchstart", () => movePlayer(0, -1));
+    document.getElementById("btn-down").addEventListener("touchstart", () => movePlayer(0, 1));
+    document.getElementById("btn-left").addEventListener("touchstart", () => movePlayer(-1, 0));
+    document.getElementById("btn-right").addEventListener("touchstart", () => movePlayer(1, 0));
+
+    document.getElementById("btn-up").addEventListener("click", () => movePlayer(0, -1));
+    document.getElementById("btn-down").addEventListener("click", () => movePlayer(0, 1));
+    document.getElementById("btn-left").addEventListener("click", () => movePlayer(-1, 0));
+    document.getElementById("btn-right").addEventListener("click", () => movePlayer(1, 0));
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowUp") movePlayer(0, -1);
+      else if (e.key === "ArrowDown") movePlayer(0, 1);
+      else if (e.key === "ArrowLeft") movePlayer(-1, 0);
+      else if (e.key === "ArrowRight") movePlayer(1, 0);
+    });
+
+    generateMaze();
+    placeRewards(10);
+    draw();
+  </script>
+</body>
+
+</html>

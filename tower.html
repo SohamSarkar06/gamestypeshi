@@ -1,0 +1,125 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tower of Hanoi</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #1a1a1a;
+      color: #fff;
+    }
+    h1 { margin: 10px 0; }
+    #game {
+      display: flex;
+      justify-content: space-around;
+      align-items: flex-end;
+      height: 400px;
+      margin-top: 30px;
+    }
+    .rod {
+      background: #444;
+      width: 120px;
+      height: 300px;
+      position: relative;
+      border-radius: 10px;
+      padding-top: 10px;
+      cursor: pointer;
+    }
+    .base {
+      width: 100%;
+      height: 10px;
+      background: #999;
+      position: absolute;
+      bottom: 0;
+    }
+    .disk {
+      height: 25px;
+      background: #3fa9f5;
+      margin: 2px auto;
+      border-radius: 6px;
+      cursor: grab;
+      position: relative;
+    }
+    .highlight {
+      outline: 3px dashed yellow;
+    }
+    #message {
+      margin-top: 20px;
+      font-size: 20px;
+      color: #0f0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Tower of Hanoi</h1>
+  <div id="game">
+    <div class="rod" data-rod="0"></div>
+    <div class="rod" data-rod="1"></div>
+    <div class="rod" data-rod="2"></div>
+  </div>
+  <div id="message"></div>
+  <script>
+    const rods = document.querySelectorAll('.rod');
+    const numDisks = Math.floor(Math.random() * 3) + 3; // 3 to 5 disks
+    let selectedDisk = null;
+    let fromRod = null;
+
+    // Generate initial disks on rod 0
+    function initGame() {
+      for (let i = numDisks; i >= 1; i--) {
+        const disk = document.createElement('div');
+        disk.classList.add('disk');
+        disk.style.width = `${30 + i * 20}px`;
+        disk.dataset.size = i;
+        rods[0].appendChild(disk);
+      }
+    }
+
+    function getTopDisk(rod) {
+      const children = [...rod.children].filter(el => el.classList.contains('disk'));
+      return children[children.length - 1] || null;
+    }
+
+    function checkWin() {
+      if (rods[2].querySelectorAll('.disk').length === numDisks) {
+        document.getElementById("message").textContent = "🎉 Congratulations! You solved it!";
+      }
+    }
+
+    rods.forEach((rod) => {
+      rod.addEventListener('click', () => {
+        const topDisk = getTopDisk(rod);
+
+        if (!selectedDisk && topDisk) {
+          selectedDisk = topDisk;
+          fromRod = rod;
+          selectedDisk.classList.add("highlight");
+        } else if (selectedDisk) {
+          const targetTopDisk = getTopDisk(rod);
+          const selectedSize = parseInt(selectedDisk.dataset.size);
+          const targetSize = targetTopDisk ? parseInt(targetTopDisk.dataset.size) : Infinity;
+
+          if (selectedSize < targetSize || rod === fromRod) {
+            rod.appendChild(selectedDisk);
+            selectedDisk.classList.remove("highlight");
+            selectedDisk = null;
+            fromRod = null;
+            checkWin();
+          } else {
+            // Invalid move
+            selectedDisk.classList.remove("highlight");
+            selectedDisk = null;
+            fromRod = null;
+          }
+        }
+      });
+    });
+
+    initGame();
+  </script>
+</body>
+</html>

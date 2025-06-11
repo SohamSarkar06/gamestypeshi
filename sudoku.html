@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sudoku Game</title>
+  <style>
+    .box {
+            width: 97%;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+            background-color: #d6c7a1;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: Arial;
+      background-color: #d6c7a1;
+    }
+    table {
+      border-collapse: collapse;
+    }
+    td {
+      border: 1px solid #000;
+      width: 40px;
+      height: 40px;
+      text-align: center;
+    }
+    input {
+      width: 38px;
+      height: 38px;
+      text-align: center;
+      font-size: 18px;
+    }
+    #popup {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border: 3px solid black;
+      padding: 30px;
+      font-size: 24px;
+      border-radius: 10px;
+      z-index: 100;
+    }
+    #sudoku-container {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 20px;
+       background-color:#a9b4cc;
+       box-shadow: 0 0 10px  #a9b4cc;
+       border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Choose Board Size</h2>
+
+    <button onclick="startGame(2)">2x2 Boxes (4x4)</button>
+     <button onclick="startGame(3)">3x3 Boxes (9x9)</button>
+
+    <div id="sudoku-container">
+    <div id="popup">🎉 Congratulations!</div>
+  </div>
+
+
+
+  <script>
+    function generateBoard(boxSize) {
+      const size = boxSize * boxSize;
+      let board = Array.from({ length: size }, () => Array(size).fill(0));
+
+      function isSafe(row, col, num) {
+        for (let x = 0; x < size; x++) {
+          if (board[row][x] === num || board[x][col] === num) return false;
+        }
+        const startRow = row - row % boxSize;
+        const startCol = col - col % boxSize;
+        for (let i = 0; i < boxSize; i++) {
+          for (let j = 0; j < boxSize; j++) {
+            if (board[i + startRow][j + startCol] === num) return false;
+          }
+        }
+        return true;
+      }
+
+      function fillBoard(row, col) {
+        if (row === size) return true;
+        let nextRow = col === size - 1 ? row + 1 : row;
+        let nextCol = col === size - 1 ? 0 : col + 1;
+
+        let nums = Array.from({ length: size }, (_, i) => i + 1).sort(() => Math.random() - 0.5);
+        for (let num of nums) {
+          if (isSafe(row, col, num)) {
+            board[row][col] = num;
+            if (fillBoard(nextRow, nextCol)) return true;
+            board[row][col] = 0;
+          }
+        }
+        return false;
+      }
+
+      fillBoard(0, 0);
+      return board;
+    }
+
+    function shuffleBoard(board, boxSize) {
+      const size = board.length;
+      let puzzle = board.map(row => row.slice());
+      const clues = Math.floor(size * size * 0.4);
+      let count = 0;
+      while (count < size * size - clues) {
+        let i = Math.floor(Math.random() * size);
+        let j = Math.floor(Math.random() * size);
+        if (puzzle[i][j] !== '') {
+          puzzle[i][j] = '';
+          count++;
+        }
+      }
+      return puzzle;
+    }
+
+    let solution = [];
+
+    function startGame(boxSize) {
+      const size = boxSize * boxSize;
+      const board = generateBoard(boxSize);
+      solution = board;
+      const puzzle = shuffleBoard(board, boxSize);
+
+      const container = document.getElementById('sudoku-container');
+      container.innerHTML = '<div id="popup">🎉 Congratulations!</div>';
+
+      const table = document.createElement('table');
+      for (let i = 0; i < size; i++) {
+        const row = document.createElement('tr');
+        for (let j = 0; j < size; j++) {
+          const cell = document.createElement('td');
+          if (puzzle[i][j] !== '') {
+            cell.textContent = puzzle[i][j];
+          } else {
+            const input = document.createElement('input');
+            input.maxLength = 2;
+            input.oninput = () => checkSolution(size);
+            cell.appendChild(input);
+          }
+          row.appendChild(cell);
+        }
+        table.appendChild(row);
+      }
+      container.appendChild(table);
+    }
+
+    function checkSolution(size) {
+      const table = document.querySelector('#sudoku-container table');
+      for (let i = 0; i < size; i++) {
+        for (let j = 0; j < size; j++) {
+          const cell = table.rows[i].cells[j];
+          const value = cell.textContent || cell.firstChild?.value;
+          if (parseInt(value) !== solution[i][j]) {
+            return;
+          }
+        }
+      }
+      document.getElementById('popup').style.display = 'block';
+    }
+  </script>
+</body>
+</html>

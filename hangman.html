@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hangman Game</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #d6c7a1;
+    }
+    canvas {
+      margin: 20px;
+      border: 2px solid #333;
+      background: white;
+    }
+    #wordDisplay {
+      font-size: 24px;
+      letter-spacing: 10px;
+      margin: 20px;
+    }
+    #letters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      max-width: 500px;
+      justify-content: center;
+    }
+    button.letter {
+      padding: 10px 16px;
+      font-size: 18px;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      background: #333;
+      color: white;
+    }
+    button.letter:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
+    #popup {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 30px;
+      font-size: 24px;
+      background: white;
+      border: 2px solid #333;
+      border-radius: 10px;
+      z-index: 10;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>Hangman Game</h1>
+  <canvas id="hangmanCanvas" width="300" height="400"></canvas>
+  <div id="wordDisplay"></div>
+  <div id="letters"></div>
+  <div id="popup"></div>
+
+  <script>
+    const words = ['javascript', 'hangman', 'canvas', 'developer', 'function', 'variable', 'object', 'array', 'element'];
+    let selectedWord = '';
+    let guessed = [];
+    let mistakes = 0;
+
+    const canvas = document.getElementById('hangmanCanvas');
+    const ctx = canvas.getContext('2d');
+    const popup = document.getElementById('popup');
+    const wordDisplay = document.getElementById('wordDisplay');
+
+    function chooseWord() {
+      selectedWord = words[Math.floor(Math.random() * words.length)].toLowerCase();
+      guessed = [];
+      mistakes = 0;
+      drawBase();
+      displayWord();
+      createLetterButtons();
+      popup.style.display = 'none';
+    }
+
+    function displayWord() {
+      wordDisplay.textContent = selectedWord.split('').map(letter => guessed.includes(letter) ? letter : '_').join(' ');
+    }
+
+    function createLetterButtons() {
+      const container = document.getElementById('letters');
+      container.innerHTML = '';
+      for (let i = 65; i <= 90; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = String.fromCharCode(i);
+        btn.classList.add('letter');
+        btn.onclick = () => handleGuess(btn.textContent.toLowerCase(), btn);
+        container.appendChild(btn);
+      }
+    }
+
+    function handleGuess(letter, btn) {
+      btn.disabled = true;
+      if (selectedWord.includes(letter)) {
+        guessed.push(letter);
+        displayWord();
+        if (!wordDisplay.textContent.includes('_')) {
+          popup.textContent = '🎉 You Win!';
+          popup.style.display = 'block';
+        }
+      } else {
+        mistakes++;
+        drawHangman(mistakes);
+        if (mistakes === 6) {
+          popup.textContent = `💀 Game Over! The word was: ${selectedWord}`;
+          popup.style.display = 'block';
+        }
+      }
+    }
+
+    function drawBase() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#333';
+      ctx.beginPath();
+      ctx.moveTo(50, 380);
+      ctx.lineTo(250, 380);
+      ctx.moveTo(100, 380);
+      ctx.lineTo(100, 50);
+      ctx.lineTo(200, 50);
+      ctx.lineTo(200, 80);
+      ctx.stroke();
+    }
+
+    function drawHangman(step) {
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      switch(step) {
+        case 1: // head
+          ctx.arc(200, 100, 20, 0, Math.PI * 2);
+          break;
+        case 2: // body
+          ctx.moveTo(200, 120);
+          ctx.lineTo(200, 200);
+          break;
+        case 3: // left arm
+          ctx.moveTo(200, 140);
+          ctx.lineTo(170, 170);
+          break;
+        case 4: // right arm
+          ctx.moveTo(200, 140);
+          ctx.lineTo(230, 170);
+          break;
+        case 5: // left leg
+          ctx.moveTo(200, 200);
+          ctx.lineTo(170, 250);
+          break;
+        case 6: // right leg
+          ctx.moveTo(200, 200);
+          ctx.lineTo(230, 250);
+          break;
+      }
+      ctx.stroke();
+    }
+
+    chooseWord();
+  </script>
+</body>
+</html>
