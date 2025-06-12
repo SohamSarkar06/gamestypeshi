@@ -1,21 +1,23 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-  <title>Game Applet</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Interactive Game Applet</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', sans-serif;
       text-align: center;
       padding: 20px;
-      background-color: #f5f5f5;
-      border: 1px solid #ddd;
-      box-shadow: 0 0 100px #a9b4cc;
-      border-radius: 5px;
+      background: linear-gradient(135deg, #f5f5f5, #e0e7ff);
+      min-height: 100vh;
     }
 
     h1 {
-      margin-bottom: 30px;
+      font-size: 32px;
+      color: #333;
+      margin-bottom: 20px;
+      text-shadow: 1px 1px 2px #ccc;
     }
 
     .box {
@@ -24,72 +26,120 @@
       gap: 20px;
       justify-items: center;
       padding: 20px;
-      background-color: #a9b4cc;
-      border-radius: 10px;
-      box-shadow: 0 0 10px #a9b4cc;
+      background-color: #d9e2f3;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
       max-width: 600px;
       margin: 0 auto;
+      transition: 0.3s;
     }
 
     .game-button {
       width: 150px;
       height: 150px;
-      border: 1px solid #0e0e0e;
-      border-radius: 10px;
-      background-color: rgb(153, 207, 65);
-      box-shadow: 0 0 10px #0e0e0e;
+      border: 2px solid transparent;
+      border-radius: 12px;
+      background-color: #fff;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       padding: 10px;
+      transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+      position: relative;
+    }
+
+    .game-button:hover {
+      transform: translateY(-5px);
+      background-color: #f0f8ff;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
     }
 
     .game-button img {
       width: 64px;
       height: 64px;
       margin-bottom: 10px;
+      pointer-events: none;
     }
 
     .game-button span {
-      font-size: 14px;
-      color: #000;
+      font-size: 16px;
+      color: #333;
+      font-weight: 500;
+    }
+
+    .game-button::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: -28px;
+      background-color: #333;
+      color: #fff;
+      padding: 5px 10px;
+      font-size: 12px;
+      border-radius: 5px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .game-button:hover::after {
+      opacity: 1;
     }
 
     iframe {
       width: 100%;
-      height: 600px;
+      max-width: 1200px;
+      height: 1000px;
       border: none;
-      margin-top: 30px;
+      border-radius: 10px;
+      margin: 30px auto 0;
+      display: block;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+      transition: opacity 0.4s;
+      background: white;
+    }
+
+    @media (max-width: 768px) {
+      iframe {
+        height: 400px;
+      }
     }
   </style>
 </head>
-
 <body>
-  <h1>Play a Game!</h1>
+
+  <h1>🎮 Choose a Game to Play!</h1>
+
   <div class="box">
-    <button class="game-button" onclick="loadGame('sudoku')">
+    <button class="game-button" onclick="loadGame('sudoku')" data-tooltip="Play Sudoku">
       <img src="https://img.icons8.com/external-icongeek26-glyph-icongeek26/64/external-Sudoku-table-games-icongeek26-glyph-icongeek26.png" alt="Sudoku">
       <span>Sudoku</span>
     </button>
-    <button class="game-button" onclick="loadGame('connect4')">
+
+    <button class="game-button" onclick="loadGame('connect4')" data-tooltip="Play Connect 4">
       <img src="https://img.icons8.com/ios-glyphs/30/swivel.png" alt="Connect 4">
       <span>Connect 4</span>
     </button>
-    <button class="game-button" onclick="loadGame('tictactoe')">
+
+    <button class="game-button" onclick="loadGame('tictactoe')" data-tooltip="Play Tic Tac Toe">
       <img src="https://img.icons8.com/ios/100/000000/tic-tac-toe.png" alt="Tic Tac Toe">
       <span>Tic Tac Toe</span>
     </button>
-    <button class="game-button" onclick="loadGame('hangman')">
+    
+    <button class="game-button" onclick="loadGame('hangman')" data-tooltip="Play Hangman">
       <img src="https://img.icons8.com/ios-filled/100/000000/hangman.png" alt="Hangman">
       <span>Hangman</span>
     </button>
-    <button class="game-button" onclick="loadGame('Mazegame')">
+
+    <button class="game-button" onclick="loadGame('Mazegame')" data-tooltip="Play Maze Game">
       <img src="https://img.icons8.com/ios-filled/50/hard-to-find.png" alt="Maze Game">
       <span>Maze Game</span>
     </button>
-        <button class="game-button" onclick="loadGame('tower')">
+
+    <button class="game-button" onclick="loadGame('tower')" data-tooltip="Play Tower of Hanoi">
       <img src="https://img.icons8.com/ios-glyphs/30/stack.png" alt="Tower of Hanoi">
       <span>Tower of Hanoi</span>
     </button>
@@ -99,11 +149,13 @@
 
   <script>
     function loadGame(game) {
-      const gameFrame = document.getElementById("gameFrame");
-      gameFrame.src = game + ".html";
+      const frame = document.getElementById("gameFrame");
+      frame.style.opacity = 0;
+      setTimeout(() => {
+        frame.src = game + ".html";
+        frame.style.opacity = 1;
+      }, 300);
     }
   </script>
 </body>
-
-
 </html>
